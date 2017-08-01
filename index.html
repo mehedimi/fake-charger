@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Fake Charger</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link href="https://fonts.googleapis.com/css?family=Montserrat+Alternates" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div class="container" id="app">
+		<div class="title row-first">
+			<h1>Fake Charger</h1>
+		</div>
+		<div class="body">
+			<div class="icon">
+				<span class="fa" :class="[chargingStatus, currentBatteryState]"></span>
+			</div>
+			<div class="cable" :class="{active : isCharging}"></div>
+			<div class="power">
+				<h2 :class="{'cable-battery-full' : isBatteryFull(power.source), 'cable-battery-three-quarters' : isBatteryThreeQuarters(power.source), 'cable-battery-half' : isBatteryHalf(power.source), 'cable-battery-quarter' : isBatteryQuarter(power.source), 'cable-battery-empty' : isBatteryEmpty(power.source)}">
+					Power
+				</h2>
+			</div>
+		</div>
+		<div class="body body-mofier">
+			<div class="flex-1">
+				{{ power.battery }}%
+			</div>
+			<div class="flex-1">
+				{{ chargingStatusText }}
+			</div>
+			<div class="flex-1">
+				{{ power.source }}%
+			</div>
+		</div>
+		<div>
+			<button class="charging-button" :class="{focus : isCharging}" @click="charge()"><span class="fa fa-flash"></span> {{ chargingButton }}</button>
+		</div>
+		<div class="footer">
+			<h2><a target="_blank" href="https://fb.com/mehedimi">@Mehedi Hasan</a></h2>
+		</div>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.js"></script>
+	<script>
+		var app = new Vue({
+			el : '#app',
+			data : {
+				chargingState : ['battery-quarter', 'battery-half', 'battery-three-quarters', 'battery-full', 'battery-empty'],
+				currentBatteryState : 'battery-empty',
+				timer : null,
+				isCharging : false,
+				power : {
+					battery : 0,
+					source : 100
+				}
+			},
+			methods : {
+				charge : function(){
+					!this.isCharging ? this.chargingStart() : this.chargingStop();
+				},
+				chargingStart : function(){
+					if(this.power.source <= 0){
+						this.resetCharge();
+					}
+					this.isCharging = true;
+					this.timerStart();
+				},
+				chargingStop : function(){
+					this.isCharging = false;
+					this.timerStop();
+				},
+				timerStart : function(){
+					this.timer = setInterval(function(){
+						var stateIndex = this.chargingState.indexOf(this.currentBatteryState);
+						if(this.currentBatteryState == 'battery-empty'){
+							this.currentBatteryState = this.chargingState[0];
+						}else{
+							this.currentBatteryState = this.chargingState[(stateIndex + 1)];
+						}
+						this.chargeTransfer();
+					}.bind(this), 700);
+				},
+				timerStop : function(){
+					clearInterval(this.timer);
+				},
+				chargeTransfer : function(){
+					var charge = Math.floor((Math.random() * 4) + 1);
+					if((this.power.battery + charge) > 100){
+						charge = 1;
+					}
+					this.power.battery += charge;
+					this.power.source -= charge;
+				},
+				blast : function(){
+
+				},
+				resetCharge : function(){
+					this.timerStop();
+					this.isCharging = false;
+					this.currentBatteryState = 'battery-empty';
+					this.power.battery = 0;
+					this.power.source = 100;
+				},
+				isBatteryFull : function(value){
+					return (value  >= 80 && value < 100);
+				},
+				isBatteryThreeQuarters : function(value){
+					return (value  >= 60 && value < 80);
+				},
+				isBatteryHalf : function(value){
+					return (value  >= 50 && value < 60);
+				},
+				isBatteryQuarter : function(value){
+					return (value  >= 30 && value < 50);
+				},
+				isBatteryEmpty : function(value){
+					return (value < 30);
+				}
+			},
+			computed : {
+				chargingButton : function(){
+					return this.isCharging ? 'Plug Out' : 'Plug In';
+				},
+				chargingStatus : function(){
+					return 'fa-' + this.currentBatteryState;
+				},
+				cableColor : function(){
+					return 'cable-' + this.currentBatteryState;
+				},
+				chargingStatusText : function(){
+					return this.isCharging ? 'Charging...' : 'Plug Out';
+				}
+			},
+			watch : {
+				"power.battery" : function(value){
+					if(value >= 100){
+						this.currentBatteryState = 'battery-full';
+						this.chargingStop();
+					}
+				}
+			}
+
+		});
+
+	</script>
+</body>
+</html>
